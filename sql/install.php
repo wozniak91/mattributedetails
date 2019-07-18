@@ -27,6 +27,10 @@ $sql = array();
 
 $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'mattributedetails` (
     `id_mattributedetails` int(11) NOT NULL AUTO_INCREMENT,
+    `title` varchar(255) NOT NULL,
+    `content` longtext,
+    `cover_image` varchar(512) DEFAULT NULL,
+    `active` tinyint(1) unsigned NOT NULL DEFAULT "0"
     PRIMARY KEY  (`id_mattributedetails`)
 ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
 
