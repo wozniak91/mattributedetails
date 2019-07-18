@@ -28,6 +28,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+include_once(_PS_MODULE_DIR_.'mattributedetails/classes/AttributeDatails.php');
+
 class Mattributedetails extends Module
 {
     protected $config_form = false;
