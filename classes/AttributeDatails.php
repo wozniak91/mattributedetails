@@ -14,8 +14,12 @@ class AttributeDetails extends ObjectModel {
             'title' =>          array('type' => self::TYPE_STRING, 'validate' => 'isGenericName', 'required' => true, 'size' => 128),
             'content' =>        array('type' => self::TYPE_HTML, 'validate' => 'isCleanHtml'),
             'cover_image' =>    array('type' => self::TYPE_STRING, 'validate' => 'isGenericName', 'size' => 128),
-            'active' =>         array('type' => self::TYPE_BOOL, 'validate' => 'isBool', 'required' => true),
+            'active' =>         array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
         ]
     ];
+
+    public static function getAll() {
+        return Db::getInstance()->executeS('SELECT * FROM `'._DB_PREFIX_.'mattributedetails`');
+    }
 
 }

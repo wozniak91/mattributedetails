@@ -41,6 +41,7 @@ class Mattributedetails extends Module
         $this->version = '1.0.0';
         $this->author = 'Rafał Woźniak';
         $this->need_instance = 1;
+        $this->errors = [];
 
         /**
          * Set $this->bootstrap to true if your module is compliant with bootstrap (PrestaShop 1.6)
@@ -91,14 +92,63 @@ class Mattributedetails extends Module
          * If values have been submitted in the form, process.
          */
         if (((bool)Tools::isSubmit('submitMattributedetailsModule')) == true) {
-            $this->postProcess();
+            $this->saveAttributeDetails();
+            if(!empty($this->errors)) {
+
+            }
         }
 
-        $this->context->smarty->assign('module_dir', $this->_path);
+        if (((bool)Tools::isSubmit('addmattributedetails')) == true) {
+            return $this->renderForm();
+        }
 
-        $output = $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');
+        // $this->context->smarty->assign('module_dir', $this->_path);
 
-        return $output.$this->renderForm();
+        // $output = $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');
+        //.$this->renderForm();
+        
+        return $this->displayError($this->errors).$this->getAttributeDetailsList();
+    }
+
+    public function getAttributeDetailsList()
+    {
+
+        $attributes_details = AttributeDetails::getAll();
+
+        $fields_list = array(
+            'id_mattributedetails' => array(
+                'title' => 'ID',
+                'width' => '50',
+                'type' => 'text', 
+            ),
+            'title' => array(
+                'title' => $this->l('Name'),
+                'width' => 'auto',
+                'type' => 'text'
+            ),
+        );
+
+        $helper = new HelperList();
+        $helper->shopLinkType = '';
+        $helper->simple_header = false;
+        $helper->identifier = 'id_mattributedetails';
+        // $helper->position_identifier = 'position';
+        // $helper->orderBy = 'position';
+        // $helper->orderWay = 'ASC';
+        $helper->actions = array('edit', 'delete', 'add');
+        $helper->show_toolbar = false;
+        $helper->toolbar_btn['new'] = array(
+            'href' => AdminController::$currentIndex.'&configure='.$this->name.'&add'.$this->name.'&token='.Tools::getAdminTokenLite('AdminModules'),
+            'desc' => $this->l('Add new...')
+        );
+        $helper->table_id = 'module-'.$this->name;
+        $helper->title = $this->displayName;
+        $helper->table = $this->name;
+        $helper->token = Tools::getAdminTokenLite('AdminModules');
+        $helper->currentIndex = AdminController::$currentIndex.'&configure='.$this->name;
+
+        return $helper->generateList($attributes_details, $fields_list);
+
     }
 
     /**
@@ -137,16 +187,24 @@ class Mattributedetails extends Module
         return array(
             'form' => array(
                 'legend' => array(
-                'title' => $this->l('Settings'),
-                'icon' => 'icon-cogs',
+                'title' => $this->l('Add new attribute details'),
+                'icon' => 'icon-plus',
                 ),
                 'input' => array(
                     array(
+                        'type' => 'file',
+                        'label' => $this->l('Cover Image'),
+                        'name' => 'MATTRIBUTEDETAILS_COVER_IMAGE',
+                        'display_image' => true,
+                        'required' => false,
+                        'desc' => $this->l('Upload your cover image')
+                    ),
+                    array(
                         'type' => 'switch',
-                        'label' => $this->l('Live mode'),
-                        'name' => 'MATTRIBUTEDETAILS_LIVE_MODE',
+                        'label' => $this->l('Active'),
+                        'name' => 'MATTRIBUTEDETAILS_ACTIVE',
                         'is_bool' => true,
-                        'desc' => $this->l('Use this module in live mode'),
+                        'desc' => $this->l('Use this if you want to set this content visible'),
                         'values' => array(
                             array(
                                 'id' => 'active_on',
@@ -161,18 +219,20 @@ class Mattributedetails extends Module
                         ),
                     ),
                     array(
-                        'col' => 3,
+                        'col' => 4,
                         'type' => 'text',
-                        'prefix' => '<i class="icon icon-envelope"></i>',
-                        'desc' => $this->l('Enter a valid email address'),
-                        'name' => 'MATTRIBUTEDETAILS_ACCOUNT_EMAIL',
-                        'label' => $this->l('Email'),
+                        'name' => 'MATTRIBUTEDETAILS_TITLE',
+                        'label' => $this->l('Name'),
+                        'desc' => $this->l('Enter a valid attribute name'),
                     ),
                     array(
-                        'type' => 'password',
-                        'name' => 'MATTRIBUTEDETAILS_ACCOUNT_PASSWORD',
-                        'label' => $this->l('Password'),
-                    ),
+                        'col' => 7,
+                        'type' => 'textarea',
+                        'label' => $this->l('Content'),
+                        'name' => 'MATTRIBUTEDETAILS_CONTENT',
+                        'class' => 'rte',
+                        'autoload_rte' => true
+                    )
                 ),
                 'submit' => array(
                     'title' => $this->l('Save'),
@@ -187,9 +247,9 @@ class Mattributedetails extends Module
     protected function getConfigFormValues()
     {
         return array(
-            'MATTRIBUTEDETAILS_LIVE_MODE' => Configuration::get('MATTRIBUTEDETAILS_LIVE_MODE', true),
-            'MATTRIBUTEDETAILS_ACCOUNT_EMAIL' => Configuration::get('MATTRIBUTEDETAILS_ACCOUNT_EMAIL', 'contact@prestashop.com'),
-            'MATTRIBUTEDETAILS_ACCOUNT_PASSWORD' => Configuration::get('MATTRIBUTEDETAILS_ACCOUNT_PASSWORD', null),
+            'MATTRIBUTEDETAILS_ACTIVE' => 0,
+            'MATTRIBUTEDETAILS_TITLE' => '',
+            'MATTRIBUTEDETAILS_CONTENT' => ''
         );
     }
 
@@ -198,12 +258,60 @@ class Mattributedetails extends Module
      */
     protected function postProcess()
     {
-        $form_values = $this->getConfigFormValues();
+        // $form_values = $this->getConfigFormValues();
 
-        foreach (array_keys($form_values) as $key) {
-            Configuration::updateValue($key, Tools::getValue($key));
-        }
+        // foreach (array_keys($form_values) as $key) {
+        //     Configuration::updateValue($key, Tools::getValue($key));
+        // }
     }
+
+
+    protected function saveAttributeDetails() {
+
+        $active = Tools::getValue('MATTRIBUTEDETAILS_ACTIVE');
+        $title = Tools::getValue('MATTRIBUTEDETAILS_TITLE');
+        $content = Tools::getValue('MATTRIBUTEDETAILS_CONTENT');
+
+        $image = Tools::fileAttachment('MATTRIBUTEDETAILS_COVER_IMAGE');
+
+        $attributeDetails = new AttributeDetails;
+
+        
+
+        $temp_name = tempnam(_PS_TMP_IMG_DIR_, 'PS');
+        $salt = sha1(microtime());
+        if ($error = ImageManager::validateUpload($_FILES['MATTRIBUTEDETAILS_COVER_IMAGE']))
+            $this->errors[] = $error;
+        elseif (!$temp_name || !move_uploaded_file($_FILES['MATTRIBUTEDETAILS_COVER_IMAGE']['tmp_name'], $temp_name))
+            return false;
+        elseif (!ImageManager::resize($temp_name, dirname(__FILE__).'/images/'.$salt.'_'.$_FILES['MATTRIBUTEDETAILS_COVER_IMAGE']['name'], 600, 600, 'png'))
+            $this->errors[] = $this->l('An error occurred during the image upload process.');
+        else
+            $attributeDetails->cover_image = $salt.'_'.$_FILES['MATTRIBUTEDETAILS_COVER_IMAGE']['name'];
+
+        if (isset($temp_name))
+            @unlink($temp_name);
+
+        if(empty($title) || !Validate::isGenericName($title))
+            $this->errors[] = $this->l('Title field is required.');
+
+        if(empty($content) || !Validate::isCleanHtml($content))
+            $this->errors[] = $this->l('Content field is required.');
+
+        $attributeDetails->title = $title;
+        $attributeDetails->content = $content;
+        $attributeDetails->active = $active;
+
+        
+        if(empty($this->errors)) {
+            return $attributeDetails->add();
+        } else {
+            return false;
+        }
+            
+
+    }
+
 
     /**
     * Add the CSS & JavaScript files you want to be loaded in the BO.
