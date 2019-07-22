@@ -91,23 +91,39 @@ class Mattributedetails extends Module
         /**
          * If values have been submitted in the form, process.
          */
-        if (((bool)Tools::isSubmit('submitMattributedetailsModule')) == true) {
-            $this->saveAttributeDetails();
-            if(!empty($this->errors)) {
+        $output = '';
 
+        if (((bool)Tools::isSubmit('submitMattributedetailsModule')) == true) {
+            if($this->saveAttributeDetails()) {
+                $output .= $this->displayConfirmation($this->l('New attribute details has been added successfully'));
+            }   else {
+                return $this->displayError($this->errors).$this->renderForm();
+            }
+        }
+        
+        if (((bool)Tools::isSubmit('editMattributedetailsModule')) == true) {
+            if($this->updateAttributeDetails()) {
+                $output .= $this->displayConfirmation($this->l('Attribute details has been updated successfully'));
+            }   else {
+                return $this->displayError($this->errors).$this->renderForm();
             }
         }
 
-        if (((bool)Tools::isSubmit('addmattributedetails')) == true) {
+        if (((bool)Tools::isSubmit('deletemattributedetails')) == true) {
+            $id_attribute_details = (int)Tools::getValue('id_mattributedetails');
+
+            $attributeDetails = new AttributeDetails($id_attribute_details);
+            if($attributeDetails->delete()) {
+                $output .= $this->displayConfirmation($this->l('Attribute details has been removed successfully'));
+            }
+        }   
+
+        if (((bool)Tools::isSubmit('addmattributedetails')) == true || ((bool)Tools::isSubmit('updatemattributedetails')) == true) {
             return $this->renderForm();
         }
 
-        // $this->context->smarty->assign('module_dir', $this->_path);
-
-        // $output = $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');
-        //.$this->renderForm();
         
-        return $this->displayError($this->errors).$this->getAttributeDetailsList();
+        return $output.$this->getAttributeDetailsList();
     }
 
     public function getAttributeDetailsList()
@@ -117,8 +133,8 @@ class Mattributedetails extends Module
 
         $fields_list = array(
             'id_mattributedetails' => array(
-                'title' => 'ID',
-                'width' => '50',
+                'title' => $this->l('Id'),
+                'width' => 'auto',
                 'type' => 'text', 
             ),
             'title' => array(
@@ -126,6 +142,15 @@ class Mattributedetails extends Module
                 'width' => 'auto',
                 'type' => 'text'
             ),
+            'active' => array(
+                'title'      => $this->l('Status'),
+                'active'     => 'status',
+                'filter_key' => '!active',
+                'type'       => 'bool',
+                'width'      => 'auto',
+                'orderby'    => false,
+                'search'     => false,
+            )
         );
 
         $helper = new HelperList();
@@ -165,7 +190,7 @@ class Mattributedetails extends Module
         $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG', 0);
 
         $helper->identifier = $this->identifier;
-        $helper->submit_action = 'submitMattributedetailsModule';
+        $helper->submit_action = Tools::getIsset('id_mattributedetails') ? 'editMattributedetailsModule' : 'submitMattributedetailsModule';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
             .'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
@@ -184,6 +209,16 @@ class Mattributedetails extends Module
      */
     protected function getConfigForm()
     {
+        
+        if(Tools::getIsset('id_mattributedetails')) {
+            $id_attribute_details = (int)Tools::getValue('id_mattributedetails');
+            $attributeDetails = new AttributeDetails($id_attribute_details);
+
+            $image = $attributeDetails->getCoverPath();
+            $image_url = ImageManager::thumbnail($image, $this->table.'_'.(int)$attributeDetails->id.'.png', 350, 'jpg', true, true);
+            $image_size = file_exists($image) ? filesize($image) / 1000 : false;
+        }
+        
         return array(
             'form' => array(
                 'legend' => array(
@@ -192,19 +227,25 @@ class Mattributedetails extends Module
                 ),
                 'input' => array(
                     array(
+                        'type' => 'hidden',
+                        'name' => 'MATTRIBUTEDETAILS_ID',
+                    ),
+                    array(
                         'type' => 'file',
                         'label' => $this->l('Cover Image'),
                         'name' => 'MATTRIBUTEDETAILS_COVER_IMAGE',
+                        'image' => Tools::getIsset('id_mattributedetails') ? $image_url : false,
+                        'size' => Tools::getIsset('id_mattributedetails') ? $image_size : false,
                         'display_image' => true,
-                        'required' => false,
-                        'desc' => $this->l('Upload your cover image')
+                        'col' => 8,
+                        'hint' => $this->l('Upload your cover image.')
                     ),
                     array(
                         'type' => 'switch',
                         'label' => $this->l('Active'),
                         'name' => 'MATTRIBUTEDETAILS_ACTIVE',
                         'is_bool' => true,
-                        'desc' => $this->l('Use this if you want to set this content visible'),
+                        'hint' => $this->l('Use this if you want to set this content visible'),
                         'values' => array(
                             array(
                                 'id' => 'active_on',
@@ -222,6 +263,7 @@ class Mattributedetails extends Module
                         'col' => 4,
                         'type' => 'text',
                         'name' => 'MATTRIBUTEDETAILS_TITLE',
+                        'required' => false,
                         'label' => $this->l('Name'),
                         'desc' => $this->l('Enter a valid attribute name'),
                     ),
@@ -230,8 +272,10 @@ class Mattributedetails extends Module
                         'type' => 'textarea',
                         'label' => $this->l('Content'),
                         'name' => 'MATTRIBUTEDETAILS_CONTENT',
+                        'required' => false,
                         'class' => 'rte',
-                        'autoload_rte' => true
+                        'autoload_rte' => true,
+                        'desc' => $this->l('Enter a attribute datials content'),
                     )
                 ),
                 'submit' => array(
@@ -246,25 +290,20 @@ class Mattributedetails extends Module
      */
     protected function getConfigFormValues()
     {
+        
+        if(Tools::getIsset('id_mattributedetails')) {
+            $id_attribute_details = (int)Tools::getValue('id_mattributedetails');
+            $attributeDetails = new AttributeDetails($id_attribute_details);
+        }
+        
         return array(
-            'MATTRIBUTEDETAILS_ACTIVE' => 0,
-            'MATTRIBUTEDETAILS_TITLE' => '',
-            'MATTRIBUTEDETAILS_CONTENT' => ''
+            'MATTRIBUTEDETAILS_ID' => Tools::getIsset('id_mattributedetails') ? $attributeDetails->id : false,
+            'MATTRIBUTEDETAILS_COVER_IMAGE' => '',
+            'MATTRIBUTEDETAILS_ACTIVE' => Tools::getIsset('id_mattributedetails') ? $attributeDetails->active : false,
+            'MATTRIBUTEDETAILS_TITLE' => Tools::getIsset('id_mattributedetails') ? $attributeDetails->title : '',
+            'MATTRIBUTEDETAILS_CONTENT' => Tools::getIsset('id_mattributedetails') ? $attributeDetails->content : '',
         );
     }
-
-    /**
-     * Save form data.
-     */
-    protected function postProcess()
-    {
-        // $form_values = $this->getConfigFormValues();
-
-        // foreach (array_keys($form_values) as $key) {
-        //     Configuration::updateValue($key, Tools::getValue($key));
-        // }
-    }
-
 
     protected function saveAttributeDetails() {
 
@@ -272,11 +311,7 @@ class Mattributedetails extends Module
         $title = Tools::getValue('MATTRIBUTEDETAILS_TITLE');
         $content = Tools::getValue('MATTRIBUTEDETAILS_CONTENT');
 
-        $image = Tools::fileAttachment('MATTRIBUTEDETAILS_COVER_IMAGE');
-
         $attributeDetails = new AttributeDetails;
-
-        
 
         $temp_name = tempnam(_PS_TMP_IMG_DIR_, 'PS');
         $salt = sha1(microtime());
@@ -312,6 +347,54 @@ class Mattributedetails extends Module
 
     }
 
+    protected function updateAttributeDetails() {
+
+        
+        $id_attribute_details = Tools::getValue('MATTRIBUTEDETAILS_ID');
+        $active = Tools::getValue('MATTRIBUTEDETAILS_ACTIVE');
+        $title = Tools::getValue('MATTRIBUTEDETAILS_TITLE');
+        $content = Tools::getValue('MATTRIBUTEDETAILS_CONTENT');
+
+        $attributeDetails = new AttributeDetails($id_attribute_details);
+        
+        if($_FILES['MATTRIBUTEDETAILS_COVER_IMAGE']['name']) {
+
+            $temp_name = tempnam(_PS_TMP_IMG_DIR_, 'PS');
+            $salt = sha1(microtime());
+            if ($error = ImageManager::validateUpload($_FILES['MATTRIBUTEDETAILS_COVER_IMAGE'])) {
+                $this->errors[] = $error;
+    
+            } elseif (!$temp_name || !move_uploaded_file($_FILES['MATTRIBUTEDETAILS_COVER_IMAGE']['tmp_name'], $temp_name)) {
+                return false;
+            } elseif (!ImageManager::resize($temp_name, dirname(__FILE__).'/images/'.$salt.'_'.$_FILES['MATTRIBUTEDETAILS_COVER_IMAGE']['name'], 600, 600, 'png')) {
+                $this->errors[] = $this->l('An error occurred during the image upload process.');
+            } else {
+                unlink($attributeDetails->getCoverPath());
+                $attributeDetails->cover_image = $salt.'_'.$_FILES['MATTRIBUTEDETAILS_COVER_IMAGE']['name'];
+            }
+                
+            if (isset($temp_name))
+                @unlink($temp_name);
+        }
+
+        if(empty($title) || !Validate::isGenericName($title))
+            $this->errors[] = $this->l('Title field is required.');
+
+        if(empty($content) || !Validate::isCleanHtml($content))
+            $this->errors[] = $this->l('Content field is required.');
+
+        $attributeDetails->title = $title;
+        $attributeDetails->content = $content;
+        $attributeDetails->active = $active;
+        
+        if(empty($this->errors)) {
+            return $attributeDetails->save();
+        } else {
+            return false;
+        }
+            
+
+    }
 
     /**
     * Add the CSS & JavaScript files you want to be loaded in the BO.

@@ -18,6 +18,33 @@ class AttributeDetails extends ObjectModel {
         ]
     ];
 
+    /**
+     * Deletes current object from database
+     *
+     * @return bool True if delete was successful
+     * @throws PrestaShopException
+     */
+
+    public function delete()
+    {
+        $this->deleteCoverImage();
+        return parent::delete();
+    }
+
+    public function deleteCoverImage() {
+
+        if(file_exists($this->getCoverPath())) {
+            unlink($this->getCoverPath());
+        }
+
+        return true;
+    }
+
+    public function getCoverPath() {
+        return _PS_MODULE_DIR_.'mattributedetails/images/'.$this->cover_image;
+    }
+
+    
     public static function getAll() {
         return Db::getInstance()->executeS('SELECT * FROM `'._DB_PREFIX_.'mattributedetails`');
     }
