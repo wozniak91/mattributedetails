@@ -49,7 +49,7 @@ class Mattributedetails extends Module
         $this->bootstrap = true;
 
         parent::__construct();
-
+        $this->controllers = array('attributes');
         $this->displayName = $this->l('Attribute details');
         $this->description = $this->l('Display a details of attribute ');
 
