@@ -19,6 +19,7 @@ class MattributedetailsAttributesModuleFrontController extends ModuleFrontContro
 
         parent::initContent();
         $this->context->controller->addCSS(_PS_MODULE_DIR_.$this->module->name.'/views/css/front/mattributedetails.css');
+        $this->context->controller->addJS(_PS_MODULE_DIR_.$this->module->name.'/views/js/front/mattributedetails.js');
 
         $attributes_details = AttributeDetails::getAll();
 
@@ -51,15 +52,12 @@ class MattributedetailsAttributesModuleFrontController extends ModuleFrontContro
         return false;
     }
 
-    public function ajaxProcessGetFabric()
+    public function ajaxProcessGetAttributes()
     {
+     
+        $attributes_details = AttributeDetails::getAll();
         
-        $result = [
-            'hasError' => true,
-            'error' => $this->module->l('You do not have a wish list'),
-        ];   
-        
-        return die(Tools::jsonEncode($result));
+        return die(Tools::jsonEncode($attributes_details));
 	}
 
 
