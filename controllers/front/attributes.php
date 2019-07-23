@@ -54,11 +54,18 @@ class MattributedetailsAttributesModuleFrontController extends ModuleFrontContro
 
     public function ajaxProcessGetAttributes()
     {
-     
-        $attributes_details = AttributeDetails::getAll();
+        $attributes_details = AttributeDetails::getAll(true);
         
         return die(Tools::jsonEncode($attributes_details));
-	}
+    }
+    
+    public function ajaxProcessSearch()
+    {
+        $query = Tools::getValue('q');
+        $results = AttributeDetails::search($query);
+        
+        return die(Tools::jsonEncode($results));
+    }
 
 
 }
