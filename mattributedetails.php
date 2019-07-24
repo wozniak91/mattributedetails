@@ -56,6 +56,7 @@ class Mattributedetails extends Module
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall my module?');
 
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
+        $this->page_name = Dispatcher::getInstance()->getController();
     }
 
     /**
@@ -397,27 +398,20 @@ class Mattributedetails extends Module
     }
 
     /**
-    * Add the CSS & JavaScript files you want to be loaded in the BO.
-    */
-    public function hookBackOfficeHeader()
-    {
-        if (Tools::getValue('module_name') == $this->name) {
-            $this->context->controller->addJS($this->_path.'views/js/back.js');
-            $this->context->controller->addCSS($this->_path.'views/css/back.css');
-        }
-    }
-
-    /**
      * Add the CSS & JavaScript files you want to be added on the FO.
      */
-    public function hookHeader()
-    {
-        $this->context->controller->addJS($this->_path.'/views/js/front.js');
-        $this->context->controller->addCSS($this->_path.'/views/css/front.css');
-    }
+    // public function hookHeader()
+    // {
+    //     $this->context->controller->addJS($this->_path.'/views/js/front/mattributedetails.js');
+    //     $this->context->controller->addCSS($this->_path.'/views/css/front/mattributedetails.css');
+    // }
 
     public function hookDisplayHeader()
     {
-        /* Place your code here. */
+        if($this->page_name == 'product') {
+            $this->context->controller->addJS($this->_path.'/views/js/front/mattributedetails.js');
+            $this->context->controller->addCSS($this->_path.'/views/css/front/mattributedetails.css');
+        }
+
     }
 }

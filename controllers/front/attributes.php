@@ -18,8 +18,8 @@ class MattributedetailsAttributesModuleFrontController extends ModuleFrontContro
         $this->context = Context::getContext();
 
         parent::initContent();
-        $this->context->controller->addCSS(_PS_MODULE_DIR_.$this->module->name.'/views/css/front/mattributedetails.css');
-        $this->context->controller->addJS(_PS_MODULE_DIR_.$this->module->name.'/views/js/front/mattributedetails.js');
+        $this->context->controller->addCSS(_PS_MODULE_DIR_.$this->module->name.'/views/css/front/attributes.css');
+        $this->context->controller->addJS(_PS_MODULE_DIR_.$this->module->name.'/views/js/front/attributes.js');
 
         $attributes_details = AttributeDetails::getAll();
 

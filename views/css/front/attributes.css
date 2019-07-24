@@ -1,0 +1,29 @@
+.attribute-details {
+    animation: fade 1s both;
+    margin-bottom: 30px;
+}
+
+.attribute-details__wrapper {
+    background: white;
+    border-radius: 3px;
+    box-shadow: 0 3px 20px rgba(0,0,0,.1);
+}
+.attribute-details__title {
+    margin:0;
+    font-size: 18px;
+    text-align: center;
+    padding: 15px;
+    border-top: 1px solid #eee;
+}
+
+@keyframes fade {
+    from {
+        opacity: 0;
+        transform: scale(.5);
+    }
+
+    top {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

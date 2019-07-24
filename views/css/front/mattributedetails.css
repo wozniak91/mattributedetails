@@ -1,27 +1,27 @@
-.attribute-details {
-    animation: fade 1s both;
-}
-
-.attribute-details__wrapper {
+.mattributedetails {
     background: white;
-    border-radius: 3px;
-    box-shadow: 0 3px 20px rgba(0,0,0,.1);
-}
-.attribute-details__title {
-    margin:0;
-    font-size: 18px;
-    text-align: center;
     padding: 15px;
+    border-radius: 3px;
+    box-shadow: 0 3px 15px rgba(0,0,0,.15);
+    background-color: white;
+    width: calc(100% - 40px);
+    position: absolute;
+    opacity: 0;
+    visibility: hidden;
+}
+.mattributedetails--active {
+    animation: showDetails .5s both;
 }
 
-@keyframes fade {
-    from {
+@keyframes showDetails {
+    form {
         opacity: 0;
-        transform: scale(.5);
+        visibility: hidden;
+        transform: scale(0.5);
     }
-
-    top {
+    to {
         opacity: 1;
+        visibility: visible;
         transform: scale(1);
     }
 }
